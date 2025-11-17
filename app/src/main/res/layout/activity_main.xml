@@ -1,28 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!-- 使用 LinearLayout 可以方便地让控件垂直排列 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
     android:padding="16dp"
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/button_open_settings"
+        android:id="@+id/button_request_notification_permission"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="开启通知读取权限"
+        android:text="1. 请求发送通知权限"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/button_open_listener_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="2. 开启通知读取服务"
         android:textSize="18sp" />
 
     <TextView
         android:id="@+id/text_view_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/button_open_settings"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:text="当前权限状态：未知"
+        android:layout_marginTop="30dp"
+        android:text="服务权限状态：未知"
         android:textSize="16sp" />
 
-</RelativeLayout>
+    <Button
+        android:id="@+id/button_go_to_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:text="进入配置页面"
+        android:textSize="18sp" />
+
+
+</LinearLayout>
