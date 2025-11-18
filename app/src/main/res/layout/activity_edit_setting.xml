@@ -2,12 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_content_edit"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     tools:context=".EditSettingActivity">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar_edit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -16,9 +19,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:title="新建配置"
+            app:title="配置"
             app:titleTextColor="@android:color/white" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
@@ -32,57 +34,64 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- 确保这个ID是 edit_text_title -->
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
+                android:layout_height="wrap_content">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edit_text_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="配置标题 (例如: 转发张三消息)" />
-
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:text="目标应用"
+                android:textSize="12sp" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edit_text_package_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="目标App包名 (例如: com.tencent.mm)" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
+            <!-- 确保这个ID是 text_selected_app -->
+            <TextView
+                android:id="@+id/text_selected_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:padding="8dp"
+                android:text="尚未选择"
+                android:textSize="18sp" />
 
+            <!-- 确保这个ID是 button_choose_app -->
+            <Button
+                android:id="@+id/button_choose_app"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="选择应用" />
+
+            <!-- 确保这个ID是 edit_text_keyword -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edit_text_keyword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="过滤关键词 (例如: 张三)" />
-
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
     </ScrollView>
 
+    <!-- 确保这个ID是 button_save -->
     <Button
         android:id="@+id/button_save"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="保存"
         android:layout_margin="16dp"
         android:padding="12dp"
-        android:textSize="18sp"/>
-
+        android:text="保存"
+        android:textSize="18sp" />
 </LinearLayout>

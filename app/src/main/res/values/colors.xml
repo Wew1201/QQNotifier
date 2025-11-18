@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 天蓝色系 -->
+    <color name="blue_200">#FF90CAF9</color>  <!-- 浅蓝色 -->
+    <color name="blue_500">#FF2196F3</color>  <!-- 主色调：天蓝色 -->
+    <color name="blue_700">#FF1976D2</color>  <!-- 深蓝色 (用于状态栏) -->
+
+    <!-- 强调色 (例如，开关打开时的颜色) -->
+    <color name="light_blue_A200">#FF40C4FF</color>
+    <color name="light_blue_A700">#FF0091EA</color>
+
+    <!-- 基础色 -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>
