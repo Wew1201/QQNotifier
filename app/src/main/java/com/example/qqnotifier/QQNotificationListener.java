@@ -3,8 +3,8 @@ package com.example.qqnotifier;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.Context;
 import android.os.Bundle;
+import android.content.Context;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -23,6 +23,11 @@ public class QQNotificationListener extends NotificationListenerService {
     private NotificationManager notificationManager;
     private SettingsRepository repository;
 
+    // --- 新增：防抖动变量 ---
+    private String lastProcessedKey = ""; // 记录上一条消息的特征
+    private long lastProcessedTime = 0;   // 记录上一条消息的时间
+    private static final long MIN_INTERVAL = 1000; // 最小间隔时间（毫秒），这里设为1秒
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -36,7 +41,31 @@ public class QQNotificationListener extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
 
-        // --- 核心改动：不再使用内存缓存，每次都直接从Repository读取最新配置 ---
+        // 1. 基础信息获取
+        String packageName = sbn.getPackageName();
+        Notification notification = sbn.getNotification();
+        if (notification == null) return;
+
+        Bundle extras = notification.extras;
+        String title = extras.getString(Notification.EXTRA_TITLE, "");
+        String text = extras.getString(Notification.EXTRA_TEXT, "");
+
+        // --- 2. 核心：防抖动检查 ---
+        // 生成当前消息的唯一“指纹” (包名 + 标题 + 内容)
+        String currentKey = packageName + "|" + title + "|" + text;
+        long currentTime = System.currentTimeMillis();
+
+        // 如果 指纹一样 并且 时间间隔太短，则认为是重复通知，直接忽略
+        if (currentKey.equals(lastProcessedKey) && (currentTime - lastProcessedTime < MIN_INTERVAL)) {
+            Log.d(TAG, "检测到重复通知，已拦截: " + title);
+            return;
+        }
+
+        // 更新记录，准备处理下一条
+        lastProcessedKey = currentKey;
+        lastProcessedTime = currentTime;
+
+        // --- 3. 读取配置并匹配 (逻辑保持不变) ---
         List<SettingItem> allSettings = repository.getSettings();
         List<SettingItem> enabledSettings = new ArrayList<>();
         for (SettingItem item : allSettings) {
@@ -46,17 +75,8 @@ public class QQNotificationListener extends NotificationListenerService {
         }
 
         if (enabledSettings.isEmpty()) {
-            return; // 如果没有任何启用的配置，直接返回
+            return;
         }
-
-        // --- 后面的逻辑和之前完全一样 ---
-        String packageName = sbn.getPackageName();
-        Notification notification = sbn.getNotification();
-        if (notification == null) return;
-
-        Bundle extras = notification.extras;
-        String title = extras.getString(Notification.EXTRA_TITLE, "");
-        String text = extras.getString(Notification.EXTRA_TEXT, "");
 
         Log.d(TAG, "收到通知 -> 来自: " + packageName + ", 标题: " + title);
 
@@ -71,7 +91,6 @@ public class QQNotificationListener extends NotificationListenerService {
         }
     }
 
-    // ... isMatch, createNotificationChannel, forwardNotification 方法保持不变 ...
     private boolean isMatch(String title, String text, String keyword) {
         if (keyword == null || keyword.isEmpty()) {
             return false;
