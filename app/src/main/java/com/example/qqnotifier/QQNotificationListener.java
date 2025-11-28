@@ -3,12 +3,12 @@ package com.example.qqnotifier;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.os.Bundle;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
-import android.app.PendingIntent;
 
 import androidx.core.app.NotificationCompat;
 
@@ -24,10 +24,10 @@ public class QQNotificationListener extends NotificationListenerService {
     private NotificationManager notificationManager;
     private SettingsRepository repository;
 
-    // --- 新增：防抖动变量 ---
-    private String lastProcessedKey = ""; // 记录上一条消息的特征
-    private long lastProcessedTime = 0;   // 记录上一条消息的时间
-    private static final long MIN_INTERVAL = 1000; // 最小间隔时间（毫秒），这里设为1秒
+    // --- 防抖动变量 ---
+    private String lastProcessedKey = "";
+    private long lastProcessedTime = 0;
+    private static final long MIN_INTERVAL = 1000;
 
     @Override
     public void onCreate() {
@@ -51,22 +51,19 @@ public class QQNotificationListener extends NotificationListenerService {
         String title = extras.getString(Notification.EXTRA_TITLE, "");
         String text = extras.getString(Notification.EXTRA_TEXT, "");
 
-        // --- 2. 核心：防抖动检查 ---
-        // 生成当前消息的唯一“指纹” (包名 + 标题 + 内容)
+        // --- 2. 防抖动检查 ---
         String currentKey = packageName + "|" + title + "|" + text;
         long currentTime = System.currentTimeMillis();
 
-        // 如果 指纹一样 并且 时间间隔太短，则认为是重复通知，直接忽略
         if (currentKey.equals(lastProcessedKey) && (currentTime - lastProcessedTime < MIN_INTERVAL)) {
             Log.d(TAG, "检测到重复通知，已拦截: " + title);
             return;
         }
 
-        // 更新记录，准备处理下一条
         lastProcessedKey = currentKey;
         lastProcessedTime = currentTime;
 
-        // --- 3. 读取配置并匹配 (逻辑保持不变) ---
+        // --- 3. 读取配置 ---
         List<SettingItem> allSettings = repository.getSettings();
         List<SettingItem> enabledSettings = new ArrayList<>();
         for (SettingItem item : allSettings) {
@@ -78,9 +75,9 @@ public class QQNotificationListener extends NotificationListenerService {
         if (enabledSettings.isEmpty()) {
             return;
         }
-        // --- 在这里提取原始通知的点击动作 ---
-        PendingIntent originalIntent = notification.contentIntent;
 
+        // --- 4. 获取原始通知的关键数据 ---
+        PendingIntent originalIntent = notification.contentIntent;
 
         Log.d(TAG, "收到通知 -> 来自: " + packageName + ", 标题: " + title);
 
@@ -89,8 +86,17 @@ public class QQNotificationListener extends NotificationListenerService {
                 if (isMatch(title, text, setting.getFilterKeyword())) {
                     Log.d(TAG, "通知命中了策略: '" + setting.getTitle() + "'");
 
-                    // --- 修改调用：把 originalIntent 传进去 ---
+                    // 1. 发送我们的转发通知 (直接使用原始Intent，确保跳转成功)
                     forwardNotification(title, text, originalIntent);
+
+                    // 2. [核心修改] 发送完后，立刻销毁原始通知，防止堆积
+                    // 注意：有些系统可能会限制连续操作，加一个try-catch保护
+                    try {
+                        cancelNotification(sbn.getKey());
+                        Log.d(TAG, "已自动销毁原始通知");
+                    } catch (Exception e) {
+                        Log.e(TAG, "销毁原始通知失败", e);
+                    }
 
                     return;
                 }
@@ -120,7 +126,7 @@ public class QQNotificationListener extends NotificationListenerService {
         }
     }
 
-    // 修改方法签名，增加 PendingIntent 参数
+    // --- 回归简单的转发逻辑 ---
     private void forwardNotification(String title, String text, PendingIntent contentIntent) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MY_APP_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -128,9 +134,9 @@ public class QQNotificationListener extends NotificationListenerService {
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setAutoCancel(true); // 点击后自动消失
+                .setAutoCancel(true);
 
-        // --- 核心修改：设置点击动作 ---
+        // 直接设置原始的跳转动作，不再使用中间人
         if (contentIntent != null) {
             builder.setContentIntent(contentIntent);
         }
