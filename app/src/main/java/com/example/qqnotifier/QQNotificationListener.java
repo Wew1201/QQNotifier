@@ -8,6 +8,7 @@ import android.content.Context;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
+import android.app.PendingIntent;
 
 import androidx.core.app.NotificationCompat;
 
@@ -77,6 +78,9 @@ public class QQNotificationListener extends NotificationListenerService {
         if (enabledSettings.isEmpty()) {
             return;
         }
+        // --- 在这里提取原始通知的点击动作 ---
+        PendingIntent originalIntent = notification.contentIntent;
+
 
         Log.d(TAG, "收到通知 -> 来自: " + packageName + ", 标题: " + title);
 
@@ -84,7 +88,10 @@ public class QQNotificationListener extends NotificationListenerService {
             if (setting.getTargetPackageName().equals(packageName)) {
                 if (isMatch(title, text, setting.getFilterKeyword())) {
                     Log.d(TAG, "通知命中了策略: '" + setting.getTitle() + "'");
-                    forwardNotification(title, text);
+
+                    // --- 修改调用：把 originalIntent 传进去 ---
+                    forwardNotification(title, text, originalIntent);
+
                     return;
                 }
             }
@@ -113,14 +120,20 @@ public class QQNotificationListener extends NotificationListenerService {
         }
     }
 
-    private void forwardNotification(String title, String text) {
+    // 修改方法签名，增加 PendingIntent 参数
+    private void forwardNotification(String title, String text, PendingIntent contentIntent) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MY_APP_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setAutoCancel(true);
+                .setAutoCancel(true); // 点击后自动消失
+
+        // --- 核心修改：设置点击动作 ---
+        if (contentIntent != null) {
+            builder.setContentIntent(contentIntent);
+        }
 
         int notificationId = (int) System.currentTimeMillis();
         if (notificationManager != null) {
